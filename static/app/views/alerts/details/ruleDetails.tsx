@@ -20,7 +20,7 @@ import {IconEdit} from 'sentry/icons';
 import {t} from 'sentry/locale';
 import space from 'sentry/styles/space';
 import {DateString, Organization, Project} from 'sentry/types';
-import {IssueAlertRule} from 'sentry/types/alerts';
+import {IssueAlertRule, ProjectAlertRuleStats} from 'sentry/types/alerts';
 
 import AlertChart from './alertChart';
 import AlertRuleIssuesList from './issuesList';
@@ -33,6 +33,7 @@ type Props = AsyncComponent['props'] & {
 
 type State = AsyncComponent['state'] & {
   rule: IssueAlertRule | null;
+  ruleFireHistory: ProjectAlertRuleStats[];
 };
 
 const PAGE_QUERY_PARAMS = [
@@ -63,12 +64,29 @@ class AlertRuleDetails extends AsyncComponent<Props, State> {
     return {
       ...super.getDefaultState(),
       rule: null,
+      ruleFireHistory: [],
     };
   }
 
   getEndpoints(): ReturnType<AsyncComponent['getEndpoints']> {
     const {orgId, ruleId, projectId} = this.props.params;
-    return [['rule', `/projects/${orgId}/${projectId}/rules/${ruleId}/`]];
+    const {period, start, end, utc} = this.getDataDatetime();
+
+    return [
+      ['rule', `/projects/${orgId}/${projectId}/rules/${ruleId}/`],
+      [
+        'ruleFireHistory',
+        `/projects/${orgId}/${projectId}/rules/${ruleId}/stats/`,
+        {
+          query: {
+            ...(period && {statsPeriod: period}),
+            start,
+            end,
+            utc,
+          },
+        },
+      ],
+    ];
   }
 
   getDataDatetime(): DateTimeObject {
@@ -175,7 +193,7 @@ class AlertRuleDetails extends AsyncComponent<Props, State> {
     const {orgId, ruleId, projectId} = params;
     const {cursor} = location.query;
     const {period, start, end, utc} = this.getDataDatetime();
-    const {rule} = this.state;
+    const {rule, ruleFireHistory, loading} = this.state;
 
     if (!rule) {
       return <LoadingError message={t('There was an error loading the alert rule.')} />;
@@ -227,6 +245,8 @@ class AlertRuleDetails extends AsyncComponent<Props, State> {
               start={start ?? null}
               end={end ?? null}
               utc={utc ?? null}
+              ruleFireHistory={ruleFireHistory}
+              loading={loading}
             />
             <AlertRuleIssuesList
               organization={organization}
@@ -240,7 +260,7 @@ class AlertRuleDetails extends AsyncComponent<Props, State> {
             />
           </Layout.Main>
           <Layout.Side>
-            <Sidebar rule={rule} />
+            <Sidebar rule={rule} ruleFireHistory={ruleFireHistory} />
           </Layout.Side>
         </StyledLayoutBody>
       </PageFiltersContainer>

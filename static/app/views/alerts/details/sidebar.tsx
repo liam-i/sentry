@@ -1,5 +1,6 @@
 import {Fragment, PureComponent} from 'react';
 import styled from '@emotion/styled';
+import findLast from 'lodash/findLast';
 
 import ActorAvatar from 'sentry/components/avatar/actorAvatar';
 import {SectionHeading} from 'sentry/components/charts/styles';
@@ -11,10 +12,11 @@ import {t, tct} from 'sentry/locale';
 import overflowEllipsis from 'sentry/styles/overflowEllipsis';
 import space from 'sentry/styles/space';
 import {Actor} from 'sentry/types';
-import {IssueAlertRule} from 'sentry/types/alerts';
+import {IssueAlertRule, ProjectAlertRuleStats} from 'sentry/types/alerts';
 
 type Props = {
   rule: IssueAlertRule;
+  ruleFireHistory: ProjectAlertRuleStats[];
 };
 
 class Sidebar extends PureComponent<Props> {
@@ -106,9 +108,8 @@ class Sidebar extends PureComponent<Props> {
   }
 
   render() {
-    const {rule} = this.props;
-    // TODO: update this with rule's dateTriggered and dateModified when api updates
-    const dateTriggered = new Date(0);
+    const {rule, ruleFireHistory} = this.props;
+    const lastTriggered = findLast(ruleFireHistory, ({count}) => count > 0);
 
     const ownerId = rule.owner?.split(':')[1];
     const teamActor = ownerId && {type: 'team' as Actor['type'], id: ownerId, name: ''};
@@ -119,8 +120,8 @@ class Sidebar extends PureComponent<Props> {
           <HeaderItem>
             <Heading noMargin>{t('Last Triggered')}</Heading>
             <Status>
-              {dateTriggered ? (
-                <TimeSince date={dateTriggered} />
+              {lastTriggered ? (
+                <TimeSince date={lastTriggered.date} />
               ) : (
                 t('No alerts triggered')
               )}

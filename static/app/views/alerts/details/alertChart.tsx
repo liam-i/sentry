@@ -2,7 +2,6 @@ import * as React from 'react';
 import {withRouter, WithRouterProps} from 'react-router';
 import styled from '@emotion/styled';
 
-import AsyncComponent from 'sentry/components/asyncComponent';
 import AreaChart from 'sentry/components/charts/areaChart';
 import ChartZoom from 'sentry/components/charts/chartZoom';
 import {HeaderTitleLegend, SectionHeading} from 'sentry/components/charts/styles';
@@ -15,65 +14,26 @@ import {Organization, Project} from 'sentry/types';
 import {IssueAlertRule, ProjectAlertRuleStats} from 'sentry/types/alerts';
 import getDynamicText from 'sentry/utils/getDynamicText';
 
-type Props = AsyncComponent['props'] &
-  DateTimeObject &
+type Props = DateTimeObject &
   WithRouterProps & {
+    loading: boolean;
     orgId: string;
     organization: Organization;
     project: Project;
     rule: IssueAlertRule;
+    ruleFireHistory: ProjectAlertRuleStats[];
   };
 
-type State = AsyncComponent['state'] & {
-  ruleFireHistory: ProjectAlertRuleStats[];
-};
-
-class AlertChart extends AsyncComponent<Props, State> {
-  componentDidUpdate(prevProps: Props) {
-    const {project, organization, start, end, period, utc} = this.props;
-
-    if (
-      prevProps.start !== start ||
-      prevProps.end !== end ||
-      prevProps.period !== period ||
-      prevProps.utc !== utc ||
-      prevProps.organization.id !== organization.id ||
-      prevProps.project.id !== project.id
-    ) {
-      this.remountComponent();
-    }
-  }
-
-  getDefaultState(): State {
-    return {
-      ...super.getDefaultState(),
-      ruleFireHistory: [],
-    };
-  }
-
-  getEndpoints(): ReturnType<AsyncComponent['getEndpoints']> {
-    const {project, organization, period, start, end, utc, rule} = this.props;
-
-    return [
-      [
-        'ruleFireHistory',
-        `/projects/${organization.slug}/${project.slug}/rules/${rule.id}/stats/`,
-        {
-          query: {
-            ...(period && {statsPeriod: period}),
-            start,
-            end,
-            utc,
-          },
-        },
-      ],
-    ];
-  }
-
-  renderChart() {
-    const {router, period, start, end, utc} = this.props;
-    const {ruleFireHistory} = this.state;
-
+const AlertChart = ({
+  router,
+  period,
+  start,
+  end,
+  utc,
+  ruleFireHistory,
+  loading,
+}: Props) => {
+  const renderChart = () => {
     const series = {
       seriesName: 'Alerts Triggered',
       data: ruleFireHistory.map(alert => ({
@@ -113,9 +73,9 @@ class AlertChart extends AsyncComponent<Props, State> {
         )}
       </ChartZoom>
     );
-  }
+  };
 
-  renderEmpty() {
+  const renderEmpty = () => {
     return (
       <Panel>
         <PanelBody withPadding>
@@ -123,37 +83,30 @@ class AlertChart extends AsyncComponent<Props, State> {
         </PanelBody>
       </Panel>
     );
-  }
+  };
 
-  render() {
-    const {ruleFireHistory, loading} = this.state;
+  const totalAlertsTriggered = ruleFireHistory.reduce((acc, curr) => acc + curr.count, 0);
 
-    const totalAlertsTriggered = ruleFireHistory.reduce(
-      (acc, curr) => acc + curr.count,
-      0
-    );
-
-    return loading ? (
-      this.renderEmpty()
-    ) : (
-      <Panel>
-        <StyledPanelBody withPadding>
-          <ChartHeader>
-            <HeaderTitleLegend>{t('Alerts Triggered')}</HeaderTitleLegend>
-          </ChartHeader>
-          {getDynamicText({
-            value: this.renderChart(),
-            fixed: <Placeholder height="200px" testId="skeleton-ui" />,
-          })}
-        </StyledPanelBody>
-        <ChartFooter>
-          <FooterHeader>{t('Alerts Triggered')}</FooterHeader>
-          <FooterValue>{totalAlertsTriggered}</FooterValue>
-        </ChartFooter>
-      </Panel>
-    );
-  }
-}
+  return loading ? (
+    renderEmpty()
+  ) : (
+    <Panel>
+      <StyledPanelBody withPadding>
+        <ChartHeader>
+          <HeaderTitleLegend>{t('Alerts Triggered')}</HeaderTitleLegend>
+        </ChartHeader>
+        {getDynamicText({
+          value: renderChart(),
+          fixed: <Placeholder height="200px" testId="skeleton-ui" />,
+        })}
+      </StyledPanelBody>
+      <ChartFooter>
+        <FooterHeader>{t('Alerts Triggered')}</FooterHeader>
+        <FooterValue>{totalAlertsTriggered}</FooterValue>
+      </ChartFooter>
+    </Panel>
+  );
+};
 
 export default withRouter(AlertChart);
 
