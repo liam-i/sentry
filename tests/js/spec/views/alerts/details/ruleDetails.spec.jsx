@@ -80,20 +80,6 @@ describe('AlertRuleDetails', () => {
     expect(screen.getByText('Apr 11, 2019 1:08:59 AM UTC')).toBeInTheDocument();
   });
 
-  it('should allow paginating results', async () => {
-    createWrapper();
-
-    expect(await screen.findByLabelText('Next')).toBeEnabled();
-    userEvent.click(screen.getByLabelText('Next'));
-
-    expect(browserHistory.push).toHaveBeenCalledWith({
-      pathname: '/mock-pathname/',
-      query: {
-        cursor: '0:100:0',
-      },
-    });
-  });
-
   it('should reset pagination cursor on date change', async () => {
     createWrapper();
 
