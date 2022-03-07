@@ -8,6 +8,8 @@ import {User} from 'sentry/types';
 // limit that can be changed if necessary.
 export const MAX_WIDGETS = 30;
 
+export const DEFAULT_TABLE_LIMIT = 5;
+
 export enum DisplayType {
   AREA = 'area',
   BAR = 'bar',
@@ -30,6 +32,8 @@ export type WidgetQuery = {
   fields: string[];
   name: string;
   orderby: string;
+  aggregates?: string[];
+  columns?: string[];
 };
 
 export type Widget = {
@@ -38,9 +42,19 @@ export type Widget = {
   queries: WidgetQuery[];
   title: string;
   id?: string;
-  layout?: Partial<Layout>;
+  layout?: WidgetLayout | null;
   tempId?: string;
   widgetType?: WidgetType;
+};
+
+// We store an explicit set of keys in the backend now
+export type WidgetLayout = Pick<Layout, 'h' | 'w' | 'x' | 'y'> & {
+  minH: number;
+};
+
+export type WidgetPreview = {
+  displayType: DisplayType;
+  layout: WidgetLayout | null;
 };
 
 /**
@@ -50,6 +64,7 @@ export type DashboardListItem = {
   id: string;
   title: string;
   widgetDisplay: DisplayType[];
+  widgetPreview: WidgetPreview[];
   createdBy?: User;
   dateCreated?: string;
 };

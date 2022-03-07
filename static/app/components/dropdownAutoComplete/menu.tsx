@@ -3,10 +3,10 @@ import styled from '@emotion/styled';
 
 import AutoComplete from 'sentry/components/autoComplete';
 import DropdownBubble from 'sentry/components/dropdownBubble';
+import Input from 'sentry/components/forms/controls/input';
 import LoadingIndicator from 'sentry/components/loadingIndicator';
 import {t} from 'sentry/locale';
 import space from 'sentry/styles/space';
-import Input from 'sentry/views/settings/components/forms/controls/input';
 
 import autoCompleteFilter from './autoCompleteFilter';
 import List from './list';
@@ -63,6 +63,11 @@ type Props = {
   css?: any;
 
   'data-test-id'?: string;
+
+  /**
+   * If true, the menu will be visually detached from actor.
+   */
+  detached?: boolean;
 
   /**
    * passed down to the AutoComplete Component
@@ -181,6 +186,7 @@ const Menu = ({
   emptyMessage = t('No items'),
   searchPlaceholder = t('Filter search'),
   blendCorner = true,
+  detached = false,
   alignMenu = 'left',
   hideInput = false,
   busy = false,
@@ -295,6 +301,7 @@ const Menu = ({
               style={style}
               css={css}
               blendCorner={blendCorner}
+              detached={detached}
               alignMenu={alignMenu}
               menuWithArrow={menuWithArrow}
             >

@@ -4,6 +4,7 @@ import {components, OptionProps, SingleValueProps} from 'react-select';
 import styled from '@emotion/styled';
 import cloneDeep from 'lodash/cloneDeep';
 
+import Input, {InputProps} from 'sentry/components/forms/controls/input';
 import SelectControl, {ControlProps} from 'sentry/components/forms/selectControl';
 import Tag from 'sentry/components/tag';
 import Tooltip from 'sentry/components/tooltip';
@@ -21,12 +22,11 @@ import {
   QueryFieldValue,
   ValidateColumnTypes,
 } from 'sentry/utils/discover/fields';
-import Input from 'sentry/views/settings/components/forms/controls/input';
 
 import ArithmeticInput from './arithmeticInput';
 import {FieldValue, FieldValueColumns, FieldValueKind} from './types';
 
-type FieldValueOption = SelectValue<FieldValue>;
+export type FieldValueOption = SelectValue<FieldValue>;
 
 type FieldOptions = Record<string, FieldValueOption>;
 
@@ -195,6 +195,7 @@ class QueryField extends React.Component<Props> {
             (field.kind === FieldValueKind.FIELD ||
               field.kind === FieldValueKind.TAG ||
               field.kind === FieldValueKind.MEASUREMENT ||
+              field.kind === FieldValueKind.METRICS ||
               field.kind === FieldValueKind.BREAKDOWN) &&
             validateColumnTypes(param.columnTypes as ValidateColumnTypes, field)
           ) {
@@ -353,6 +354,7 @@ class QueryField extends React.Component<Props> {
                   (value.kind === FieldValueKind.FIELD ||
                     value.kind === FieldValueKind.TAG ||
                     value.kind === FieldValueKind.MEASUREMENT ||
+                    value.kind === FieldValueKind.METRICS ||
                     value.kind === FieldValueKind.BREAKDOWN) &&
                   validateColumnTypes(param.columnTypes as ValidateColumnTypes, value)
               ),
@@ -588,6 +590,7 @@ class QueryField extends React.Component<Props> {
             value={fieldValue.field}
             onUpdate={this.handleEquationChange}
             options={otherColumns}
+            placeholder={t('Equation')}
           />
           {error ? (
             <ArithmeticError title={error}>
@@ -628,7 +631,7 @@ function validateColumnTypes(
     return columnTypes({name: input.meta.name, dataType: input.meta.dataType});
   }
 
-  return columnTypes.includes(input.meta.dataType);
+  return (columnTypes as string[]).includes(input.meta.dataType);
 }
 
 const Container = styled('div')<{
@@ -647,10 +650,10 @@ const Container = styled('div')<{
   flex-grow: 1;
 `;
 
-type InputProps = React.HTMLProps<HTMLInputElement> & {
+interface BufferedInputProps extends React.HTMLProps<HTMLInputElement> {
   onUpdate: (value: string) => void;
   value: string;
-};
+}
 type InputState = {value: string};
 
 /**
@@ -661,8 +664,8 @@ type InputState = {value: string};
  * Using a buffered input lets us throttle rendering and enforce data
  * constraints better.
  */
-class BufferedInput extends React.Component<InputProps, InputState> {
-  constructor(props: InputProps) {
+class BufferedInput extends React.Component<BufferedInputProps, InputState> {
+  constructor(props: BufferedInputProps) {
     super(props);
     this.input = React.createRef();
   }
@@ -699,7 +702,7 @@ class BufferedInput extends React.Component<InputProps, InputState> {
   };
 
   render() {
-    const {onUpdate: _, ...props} = this.props;
+    const {onUpdate: _, as: _as, ...props} = this.props;
     return (
       <StyledInput
         {...props}
@@ -714,7 +717,7 @@ class BufferedInput extends React.Component<InputProps, InputState> {
 }
 
 // Set a min-width to allow shrinkage in grid.
-const StyledInput = styled(Input)`
+const StyledInput = styled(Input)<InputProps>`
   /* Match the height of the select boxes */
   height: 41px;
   min-width: 50px;

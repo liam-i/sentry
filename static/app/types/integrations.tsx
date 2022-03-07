@@ -1,4 +1,5 @@
 import Alert from 'sentry/components/alert';
+import {Field} from 'sentry/components/forms/type';
 import {PlatformKey} from 'sentry/data/platformCategories';
 import {
   DISABLED as DISABLED_STATUS,
@@ -6,7 +7,6 @@ import {
   NOT_INSTALLED,
   PENDING,
 } from 'sentry/views/organizationIntegrations/constants';
-import {Field} from 'sentry/views/settings/components/forms/type';
 
 import {Avatar, Choices, ObjectStatus, Scope} from './core';
 import {BaseRelease} from './release';
@@ -448,7 +448,7 @@ export type AppOrProviderOrPlugin =
 /**
  * Webhooks and servicehooks
  */
-export type WebhookEvent = 'issue' | 'error';
+export type WebhookEvent = 'issue' | 'error' | 'comment';
 
 export type ServiceHook = {
   dateCreated: string;

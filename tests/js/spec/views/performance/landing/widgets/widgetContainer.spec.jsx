@@ -1,7 +1,12 @@
 import {mountWithTheme} from 'sentry-test/enzyme';
 import {initializeData as _initializeData} from 'sentry-test/performance/initializePerformanceData';
+import {act} from 'sentry-test/reactTestingLibrary';
 
 import {TransactionMetric} from 'sentry/utils/metrics/fields';
+import {
+  PageErrorAlert,
+  PageErrorProvider,
+} from 'sentry/utils/performance/contexts/pageError';
 import {PerformanceDisplayProvider} from 'sentry/utils/performance/contexts/performanceDisplayContext';
 import {OrganizationContext} from 'sentry/views/organizationContext';
 import WidgetContainer from 'sentry/views/performance/landing/widgets/components/widgetContainer';
@@ -216,6 +221,44 @@ describe('Performance > Widgets > WidgetContainer', function () {
     );
   });
 
+  it('should call PageError Provider when errors are present', async function () {
+    const data = initializeData();
+
+    eventStatsMock = MockApiClient.addMockResponse({
+      method: 'GET',
+      url: `/organizations/org-slug/events-stats/`,
+      statusCode: 400,
+      body: {
+        detail: 'Request did not work :(',
+      },
+    });
+
+    wrapper = mountWithTheme(
+      <PageErrorProvider>
+        <PageErrorAlert />
+        <WrappedComponent
+          data={data}
+          defaultChartSetting={PerformanceWidgetSetting.TPM_AREA}
+        />
+      </PageErrorProvider>,
+      data.routerContext
+    );
+
+    // Provider update is after request promise.
+    await act(async () => {
+      await tick();
+      wrapper.update();
+    });
+
+    expect(wrapper.find('div[data-test-id="performance-widget-title"]').text()).toEqual(
+      'Transactions Per Minute'
+    );
+    expect(eventStatsMock).toHaveBeenCalledTimes(1);
+    expect(wrapper.find('div[data-test-id="page-error-alert"]').text()).toEqual(
+      'Request did not work :('
+    );
+  });
+
   it('TPM Widget', async function () {
     const data = initializeData();
 
@@ -358,7 +401,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
   });
 
   it('Worst LCP widget - metrics based', async function () {
-    const field = `count(${TransactionMetric.SENTRY_TRANSACTIONS_MEASUREMENTS_LCP})`;
+    const field = `count(${TransactionMetric.MEASUREMENTS_LCP})`;
 
     metricsMock = MockApiClient.addMockResponse({
       method: 'GET',
@@ -466,7 +509,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
   });
 
   it('Worst FCP widget - metrics based', async function () {
-    const field = `count(${TransactionMetric.SENTRY_TRANSACTIONS_MEASUREMENTS_FCP})`;
+    const field = `count(${TransactionMetric.MEASUREMENTS_FCP})`;
 
     metricsMock = MockApiClient.addMockResponse({
       method: 'GET',
@@ -575,7 +618,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
   });
 
   it('Worst FID widget - metrics based', async function () {
-    const field = `count(${TransactionMetric.SENTRY_TRANSACTIONS_MEASUREMENTS_FID})`;
+    const field = `count(${TransactionMetric.MEASUREMENTS_FID})`;
 
     metricsMock = MockApiClient.addMockResponse({
       method: 'GET',
@@ -682,7 +725,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
     const data = initializeData();
 
     it('P50 Duration', async function () {
-      const field = `p50(${TransactionMetric.SENTRY_TRANSACTIONS_TRANSACTION_DURATION})`;
+      const field = `p50(${TransactionMetric.TRANSACTION_DURATION})`;
 
       metricsMock = MockApiClient.addMockResponse({
         method: 'GET',
@@ -732,14 +775,8 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriod: '7d',
-            start: undefined,
-            end: undefined,
           }),
         })
       );
@@ -750,10 +787,6 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriodStart: '14d',
             statsPeriodEnd: '7d',
@@ -763,7 +796,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
     });
 
     it('P75 Duration', async function () {
-      const field = `p75(${TransactionMetric.SENTRY_TRANSACTIONS_TRANSACTION_DURATION})`;
+      const field = `p75(${TransactionMetric.TRANSACTION_DURATION})`;
 
       metricsMock = MockApiClient.addMockResponse({
         method: 'GET',
@@ -813,14 +846,8 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriod: '7d',
-            start: undefined,
-            end: undefined,
           }),
         })
       );
@@ -831,10 +858,6 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriodStart: '14d',
             statsPeriodEnd: '7d',
@@ -844,7 +867,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
     });
 
     it('P95 Duration', async function () {
-      const field = `p95(${TransactionMetric.SENTRY_TRANSACTIONS_TRANSACTION_DURATION})`;
+      const field = `p95(${TransactionMetric.TRANSACTION_DURATION})`;
 
       metricsMock = MockApiClient.addMockResponse({
         method: 'GET',
@@ -894,14 +917,8 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriod: '7d',
-            start: undefined,
-            end: undefined,
           }),
         })
       );
@@ -912,10 +929,6 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriodStart: '14d',
             statsPeriodEnd: '7d',
@@ -925,7 +938,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
     });
 
     it('P95 Duration - with null values', async function () {
-      const field = `p95(${TransactionMetric.SENTRY_TRANSACTIONS_TRANSACTION_DURATION})`;
+      const field = `p95(${TransactionMetric.TRANSACTION_DURATION})`;
 
       const metricsData = TestStubs.MetricsField({field});
       metricsData.groups[0].series[field][0] = null;
@@ -972,7 +985,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
     });
 
     it('P99 Duration', async function () {
-      const field = `p99(${TransactionMetric.SENTRY_TRANSACTIONS_TRANSACTION_DURATION})`;
+      const field = `p99(${TransactionMetric.TRANSACTION_DURATION})`;
 
       metricsMock = MockApiClient.addMockResponse({
         method: 'GET',
@@ -1022,14 +1035,8 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriod: '7d',
-            start: undefined,
-            end: undefined,
           }),
         })
       );
@@ -1040,10 +1047,6 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriodStart: '14d',
             statsPeriodEnd: '7d',
@@ -1053,7 +1056,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
     });
 
     it('P75 LCP', async function () {
-      const field = `p75(${TransactionMetric.SENTRY_TRANSACTIONS_MEASUREMENTS_LCP})`;
+      const field = `p75(${TransactionMetric.MEASUREMENTS_LCP})`;
 
       metricsMock = MockApiClient.addMockResponse({
         method: 'GET',
@@ -1103,14 +1106,8 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriod: '7d',
-            start: undefined,
-            end: undefined,
           }),
         })
       );
@@ -1121,10 +1118,6 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriodStart: '14d',
             statsPeriodEnd: '7d',
@@ -1134,7 +1127,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
     });
 
     it('TPM', async function () {
-      const field = `count(${TransactionMetric.SENTRY_TRANSACTIONS_TRANSACTION_DURATION})`;
+      const field = `count(${TransactionMetric.TRANSACTION_DURATION})`;
 
       metricsMock = MockApiClient.addMockResponse({
         method: 'GET',
@@ -1184,14 +1177,8 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriod: '7d',
-            start: undefined,
-            end: undefined,
           }),
         })
       );
@@ -1202,10 +1189,6 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
-            groupBy: undefined,
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriodStart: '14d',
             statsPeriodEnd: '7d',
@@ -1215,7 +1198,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
     });
 
     it('Failure Rate', async function () {
-      const field = `count(${TransactionMetric.SENTRY_TRANSACTIONS_TRANSACTION_DURATION})`;
+      const field = `count(${TransactionMetric.TRANSACTION_DURATION})`;
 
       metricsMock = MockApiClient.addMockResponse({
         method: 'GET',
@@ -1265,14 +1248,9 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
             groupBy: ['transaction.status'],
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriod: '7d',
-            start: undefined,
-            end: undefined,
           }),
         })
       );
@@ -1283,10 +1261,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
             project: [-42],
             environment: ['prod'],
             field: [field],
-            query: undefined,
             groupBy: ['transaction.status'],
-            orderBy: undefined,
-            per_page: undefined,
             interval: '1h',
             statsPeriodStart: '14d',
             statsPeriodEnd: '7d',
@@ -1514,7 +1489,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
   });
 
   it('Most slow frames widget - metrics based', async function () {
-    const field = `avg(${TransactionMetric.SENTRY_TRANSACTIONS_MEASUREMENTS_FRAMES_SLOW})`;
+    const field = `avg(${TransactionMetric.MEASUREMENTS_FRAMES_SLOW})`;
 
     metricsMock = MockApiClient.addMockResponse({
       method: 'GET',
@@ -1648,7 +1623,7 @@ describe('Performance > Widgets > WidgetContainer', function () {
   });
 
   it('Most frozen frames widget - metrics based', async function () {
-    const field = `avg(${TransactionMetric.SENTRY_TRANSACTIONS_MEASUREMENTS_FRAMES_FROZEN})`;
+    const field = `avg(${TransactionMetric.MEASUREMENTS_FRAMES_FROZEN})`;
 
     metricsMock = MockApiClient.addMockResponse({
       method: 'GET',

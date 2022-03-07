@@ -10,10 +10,13 @@ import SidebarPanelActions from 'sentry/actions/sidebarPanelActions';
 import Feature from 'sentry/components/acl/feature';
 import GuideAnchor from 'sentry/components/assistant/guideAnchor';
 import HookOrDefault from 'sentry/components/hookOrDefault';
-import {extractSelectionParameters} from 'sentry/components/organizations/pageFilters/utils';
+import {
+  extractSelectionParameters,
+  getPathsWithNewFilters,
+} from 'sentry/components/organizations/pageFilters/utils';
 import {
   IconChevron,
-  IconGraph,
+  IconDashboard,
   IconIssues,
   IconLab,
   IconLightning,
@@ -22,6 +25,7 @@ import {
   IconReleases,
   IconSettings,
   IconSiren,
+  IconSpan,
   IconStats,
   IconSupport,
   IconTelescope,
@@ -108,11 +112,13 @@ function Sidebar({location, organization}: Props) {
     pathname: string,
     evt: React.MouseEvent<HTMLAnchorElement>
   ) => {
-    // XXX(epurkhiser): No need to navigation w/ the page filters in the world
+    // XXX(epurkhiser): No need to navigate w/ the page filters in the world
     // of new page filter selection. You must pin your filters in which case
     // they will persist anyway.
-    if (organization?.features.includes('selection-filters-v2')) {
-      return;
+    if (organization) {
+      if (getPathsWithNewFilters(organization).includes(pathname)) {
+        return;
+      }
     }
 
     const globalSelectionRoutes = [
@@ -290,10 +296,31 @@ function Sidebar({location, organization}: Props) {
         onClick={(_id, evt) =>
           navigateWithPageFilters(`/organizations/${organization.slug}/dashboards/`, evt)
         }
-        icon={<IconGraph size="md" />}
+        icon={<IconDashboard size="md" />}
         label={t('Dashboards')}
         to={`/organizations/${organization.slug}/dashboards/`}
         id="customizable-dashboards"
+      />
+    </Feature>
+  );
+
+  const profiling = hasOrganization && (
+    <Feature
+      hookName="feature-disabled:profiling-sidebar-item"
+      features={['profiling']}
+      organization={organization}
+      requireAll={false}
+    >
+      <SidebarItem
+        {...sidebarItemProps}
+        index
+        onClick={(_id, evt) =>
+          navigateWithPageFilters(`/organizations/${organization.slug}/profiling/`, evt)
+        }
+        icon={<IconSpan size="md" />}
+        label={t('Profiling')}
+        to={`/organizations/${organization.slug}/profiling/`}
+        id="profiling"
       />
     </Feature>
   );
@@ -353,6 +380,7 @@ function Sidebar({location, organization}: Props) {
                 {alerts}
                 {discover2}
                 {dashboards}
+                {profiling}
               </SidebarSection>
 
               <SidebarSection>{monitors}</SidebarSection>
