@@ -1,26 +1,29 @@
-import {parseChromeTrace} from 'sentry/utils/profiling/profile/chromeTraceProfile';
+import {splitEventsByProcessAndTraceId} from 'sentry/utils/profiling/profile/chromeTraceProfile';
 
-describe('ChromeTraceProfile', () => {
-  it('parses incomplete trace', () => {
+describe('splitEventsByProcessAndTraceId', () => {
+  it('splits by thread id', () => {
     const trace: ChromeTrace.ArrayFormat = [
-      {ts: 0, ph: 'B', cat: 'a', name: 'b', pid: 1, tid: 2, args: {}},
+      {
+        ph: 'B',
+        tid: 0,
+        pid: 0,
+        cat: '',
+        name: '',
+        ts: 0,
+        args: [],
+      },
+      {
+        ph: 'B',
+        tid: 1,
+        pid: 0,
+        cat: '',
+        name: '',
+        ts: 0,
+        args: [],
+      },
     ];
 
-    const stringifiedTrace = JSON.stringify(trace);
-
-    // Drop last character, parsing should attempt to inject it
-    const partialTrace = trace.slice(0, stringifiedTrace.length - 1);
-
-    expect(parseChromeTrace(partialTrace)).toEqual([
-      {
-        ts: 0,
-        ph: 'B',
-        cat: 'a',
-        name: 'b',
-        pid: 1,
-        tid: 2,
-        args: {},
-      },
-    ]);
+    expect(splitEventsByProcessAndTraceId(trace)[0][0]).toEqual([trace[0]]);
+    expect(splitEventsByProcessAndTraceId(trace)[0][1]).toEqual([trace[1]]);
   });
 });

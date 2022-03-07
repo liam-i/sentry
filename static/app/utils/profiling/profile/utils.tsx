@@ -94,3 +94,59 @@ export function memoizeVariadicByReference<Arguments, Value>(
     return cache.value;
   };
 }
+
+function swapInPlace<T extends Array<any>>(from: number, to: number, arr: T): void {
+  const tmp = arr[from];
+  arr[from] = arr[to];
+  arr[to] = tmp;
+}
+
+interface HeapNode<T> {
+  node: T;
+  value: number;
+}
+
+class HeapNode<T> implements HeapNode<T> {
+  constructor(value: number, node: T) {
+    this.value = value;
+    this.node = node;
+  }
+}
+
+export class MinHeap<T> {
+  public size: number = 0;
+  public heap: HeapNode<T>[] = new Array();
+  private cursor: number = -1;
+
+  constructor(size?: number) {
+    if (typeof size === 'number' && !isNaN(size)) {
+      this.size = size;
+      this.heap = new Array(this.size);
+    }
+  }
+
+  insert(value: number, node: T) {
+    this.cursor++;
+
+    if (this.cursor > this.heap.length - 1) {
+      // Array needs resizing, make sure resize is synchronous
+    }
+
+    this.heap[this.cursor] = new HeapNode(value, node);
+
+    let index = this.cursor;
+    let parentIndex = Math.floor(index / 2);
+    let current = this.heap[index];
+
+    while (current && current.value < this.heap[parentIndex].value) {
+      swapInPlace(index, parentIndex, this.heap);
+      index = parentIndex;
+      parentIndex = Math.floor(index / 2);
+      current = this.heap[index];
+    }
+  }
+  delete(): HeapNode<T> {
+    // @TODO
+    return this.heap[this.heap.length - 1];
+  }
+}
