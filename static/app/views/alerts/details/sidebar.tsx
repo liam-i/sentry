@@ -109,8 +109,8 @@ class Sidebar extends PureComponent<Props> {
 
   render() {
     const {rule, ruleFireHistory} = this.props;
-    const lastTriggered = findLast(ruleFireHistory, ({count}) => count > 0);
 
+    const lastTriggered = findLast(ruleFireHistory, ({count}) => count > 0);
     const ownerId = rule.owner?.split(':')[1];
     const teamActor = ownerId && {type: 'team' as Actor['type'], id: ownerId, name: ''};
 
