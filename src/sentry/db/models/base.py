@@ -6,7 +6,7 @@ from django.utils import timezone
 
 from .fields.bounded import BoundedBigAutoField
 from .manager import BaseManager, M
-from .query import update
+from .query import create, update
 
 __all__ = ("BaseModel", "Model", "DefaultFieldsModel", "sane_repr")
 
@@ -31,6 +31,7 @@ class BaseModel(models.Model):  # type: ignore
 
     objects = BaseManager[M]()
 
+    create = create
     update = update
 
     def __getstate__(self) -> Mapping[str, Any]:
